@@ -1,6 +1,7 @@
 #include "RKF78-2.2.c/RKF78.c"
 #include "Randombits.c"
 
+#define ZeRoParsThreshold 0.00000001
 #define ElliotSigmoidSCALE 1000
 #define TwoElliotSigmoidSCALE 2000
 #define HMAX 1.0
