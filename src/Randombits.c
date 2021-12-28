@@ -89,3 +89,12 @@ unsigned char UCHARran(void){ register unsigned char i;
     }
     return base;
 }
+unsigned long int ULNGran(int size){ register unsigned char i;
+    unsigned long int oneU = 1U, base = 0U;
+
+    for(i=0; i < size; i++) if(random_bit()) { base = oneU; break; }
+    for(i++; i < size; i++){ base = base << 1;
+        if(random_bit()) base = base | oneU;
+    }
+    return base;
+}

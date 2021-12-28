@@ -1,6 +1,7 @@
-#include "src/genetic.c"
+#include "src/Genetic.c"
 
 int main(int argc, char *argv[]){
+  /*
   ODE_Parameters params = {
     0.3489494085776018,
     0.000024382635446,
@@ -17,9 +18,12 @@ int main(int argc, char *argv[]){
   if((xt = (double *) malloc(years * sizeof(double))) == NULL)
     exit(1);
 
-  int res = Generate_EDO_Prediction(xt, x0, years, &params);
+  int res = GenerateEDOPrediction(xt, x0, years, &params);
 
   for(int i = 0; i < years; i++)
     printf("x[%d] = %f\n", i, xt[i]);
   printf("Result = %d\n", res);
+  */
+
+  GeneticSolve(1);
 }

@@ -1,5 +1,4 @@
 #include "RKF78-2.2.c/RKF78.c"
-#include "Randombits.c"
 
 #define ZeRoParsThreshold 0.00000001
 #define ElliotSigmoidSCALE 1000
@@ -42,7 +41,7 @@ void MigrationODE(double t, double x, double *der, void *Params){
   *der = par->phi * x - par->beta * x * x - par->lambda*Psi(x, par->mu, par->sigma, par->delta);
 }
 
-int Generate_EDO_Prediction(double *xt, double x0, unsigned short number_of_years, ODE_Parameters *pars){
+int GenerateEDOPrediction(double *xt, double x0, unsigned short number_of_years, ODE_Parameters *pars){
   register unsigned ty;
   xt[0] = x0; // Storing IC x(0)
 
