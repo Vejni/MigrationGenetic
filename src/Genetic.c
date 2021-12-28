@@ -1,5 +1,6 @@
 #include "Randombits.c"
 #include "Predict.c"
+#include "Selection.c"
 #include <math.h>
 #include <limits.h>
 
@@ -12,15 +13,6 @@
 #define DELTA_RES 0.7629627368999298
 #define PHI_OFFSET 100
 #define PHI_RES 5.841138773
-
-typedef struct {
-  unsigned long int x0;
-  unsigned long int phi;
-  unsigned long int lambda;
-  unsigned long int mu;
-  unsigned long int sigma;
-  unsigned long int delta;
-} Genotype;
 
 const int observations[] = {14177, 13031, 9762, 11271, 8688, 7571, 6983, 4778, 2067, 1586, 793};
 
@@ -84,6 +76,10 @@ Genotype * InitPopulation(unsigned short pop_size){
 }
 
 Genotype GeneticSolve(unsigned short pop_size){
+  // It's easier to deal with an even population
+  if(!(pop_size % 2))
+    pop_size++;
+
   // Generate Initial Population
   randomize();
   Genotype * pop = InitPopulation(pop_size);
@@ -102,7 +98,7 @@ Genotype GeneticSolve(unsigned short pop_size){
     // produce new generation
 
     // For Half the population do
-    for (size_t i = 0; i < 10; i++) {
+    for (size_t i = 0; i < population_size / 2; i++) {
       // select two individuals from old generation for mating
       // ecombine the two individuals to give two offspring
       // compute fitness of the two offspring
