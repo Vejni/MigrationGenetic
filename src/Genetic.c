@@ -1,4 +1,3 @@
-#include "Randombits.c"
 #include "Predict.c"
 #include "Selection.c"
 #include <math.h>
@@ -33,7 +32,7 @@ double * Predict(Genotype gene){
   //printf("%f %ld %ld %ld %ld %ld\n", BETA, gene.phi, gene.mu, gene.sigma, gene.delta, gene.lambda);
   //printf("%f %f %f %f %f %f\n", params.beta, params.phi, params.mu, params.sigma, params.delta, params.lambda);
 
-  int x = GenerateEDOPrediction(xt, gene.x0 * X0_RES, YEARS, &params2);
+  int x = GenerateEDOPrediction(xt, gene.x0 * X0_RES, YEARS, &params);
   return xt;
 }
 
@@ -69,7 +68,7 @@ Genotype * InitPopulation(unsigned short pop_size){
     pop[i].mu = randGene(25);
     pop[i].sigma = randGene(17);
     pop[i].delta = randGene(15);
-    //printf("%ld %ld %ld %ld %ld %ld\n", pop[i].x0, pop[i].phi, pop[i].lambda, pop[i].mu, pop[i].sigma, pop[i].delta);
+    printf("%ld %ld %ld %ld %ld %ld\n", pop[i].x0, pop[i].phi, pop[i].lambda, pop[i].mu, pop[i].sigma, pop[i].delta);
   }
 
   return pop;
@@ -84,25 +83,40 @@ Genotype GeneticSolve(unsigned short pop_size){
   randomize();
   Genotype * pop = InitPopulation(pop_size);
 
-  // Compute Fitness for each Individual
+  // Fitness for each Individual
   double * fit;
   if((fit = (double *) malloc(pop_size * sizeof(double))) == NULL)
     exit(1);
-  for (size_t i = 0; i < pop_size; i++) {
-    fit[i] = fitness(pop[i]);
-    printf("%f\n", fit[i]);
-  }
+
+  // Init new_pop, parents, offsprings
+  Genotype * new_pop;
+  if((new_pop = (Genotype *) malloc(pop_size * sizeof(Genotype))) == NULL)
+      exit(1);
+  Genotype * offsprings;
+  if((offsprings = (Genotype *) malloc(2 * sizeof(Genotype))) == NULL)
+      exit(1);
+  Genotype * pars;
+  if((pars = (Genotype *) malloc(2 * sizeof(Genotype))) == NULL)
+      exit(1);
 
   // While not converging
   while(1){
-    // produce new generation
+    // Calculate fitness of new generation
+    for (size_t i = 0; i < pop_size; i++) {
+      fit[i] = fitness(pop[i]);
+      printf("%f\n", fit[i]);
+    }
 
     // For Half the population do
-    for (size_t i = 0; i < population_size / 2; i++) {
+    for (size_t i = 0; i < pop_size / 2; i++) {
       // select two individuals from old generation for mating
+      pars = RouletteWheelSelection(pars, pop_size, pop, fit);
+
       // ecombine the two individuals to give two offspring
-      // compute fitness of the two offspring
+
       // insert offspring in new generation
+      new_pop[i*2] = offsprings[0];
+      new_pop[i*2 + 1] = offsprings[1];
       break;
     }
     break;
