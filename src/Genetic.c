@@ -77,7 +77,7 @@ Genotype * InitPopulation(unsigned short pop_size){
 
 Genotype GeneticSolve(unsigned short pop_size){
   // It's easier to deal with an even population
-  if(!(pop_size % 2))
+  if(pop_size % 2)
     pop_size++;
 
   // Generate Initial Population
@@ -110,7 +110,7 @@ Genotype GeneticSolve(unsigned short pop_size){
     // For Half the population do
     for (size_t i = 0; i < pop_size / 2; i++) {
       // select two individuals from old generation for mating
-      RandomSelection(pars, pop_size, pop);
+      RankSelection(pars, pop_size, pop, fit);
 
       // ecombine the two individuals to give two offspring
 
