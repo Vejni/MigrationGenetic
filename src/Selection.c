@@ -43,14 +43,13 @@ void RouletteWheelSelection(Genotype * parents, unsigned short pop_size, Genotyp
 
     // Find Genotype
     total = 0;
-    for (size_t i = 0; i < pop_size; i++) {
+    int i = 0;
+    while (total < rand){
       total += fit[i];
-
-      // Found it
-      if (total >= rand)
-        parents[j] = pop[i];
-        break;
+      i++;
     }
+    // Found it
+    parents[j] = pop[i];
   }
 }
 
@@ -62,7 +61,7 @@ void StochasticUniversalSampling(Genotype * parents, unsigned short pop_size, Ge
   }
 
   // Get exponent for random  num generation
-  unsigned short long n = nextPowerOf2(total);
+  unsigned long n = nextPowerOf2(total);
 
   // In this case we spin the wheel once with 2 balls
   unsigned long int * rand;
@@ -72,7 +71,7 @@ void StochasticUniversalSampling(Genotype * parents, unsigned short pop_size, Ge
     // While overshooting, generate again
     do {
       rand[j] = ULNGran(n);
-    } while(rand > total);
+    } while(rand[j] > total);
   }
 
   // Oder it
@@ -82,38 +81,42 @@ void StochasticUniversalSampling(Genotype * parents, unsigned short pop_size, Ge
     rand[0] = n;
   }
 
-  // Find Genotypes
-  total = 0;
-  j = 0;
-  for (size_t i = 0; i < pop_size; i++){
-    total += fit[i];
-
+  for (size_t j = 0; j < 2; j++) {
+    // Find Genotype
+    total = 0;
+    int i = 0;
+    while (total < rand[j]){
+      total += fit[i];
+      i++;
+    }
     // Found it
-    if (total >= rand[j])
-      parents[j] = pop[i];
-      j++;
-      if(j == 2)
-        break;
+    parents[j] = pop[i];
   }
 }
 
 void TournamentSelection(Genotype * parents, unsigned short pop_size, Genotype * pop, double * fit, unsigned short k){
-  return pop;
+  return;
 }
 
 void RankSelection(Genotype * pop){
-  return pop;
+  return;
 }
 
-voidRandomSelection(Genotype * parents, unsigned short pop_size, Genotype * pop){
+void RandomSelection(Genotype * parents, unsigned short pop_size, Genotype * pop){
   // Get exponent for random  num generation
   unsigned short int n = nextPowerOf2(pop_size);
+  printf("%d\n", n);
+
+  unsigned long int * rand;
+  if((rand = (unsigned long int *) malloc(2 * sizeof(unsigned long int))) == NULL)
+    exit(1);
 
   for (size_t j = 0; j < 2; j++){
     // While overshooting, generate again
     do {
       rand[j] = ULNGran(n);
-    } while(rand > total);
-    parents[j] = pop[rand];
+  } while(rand[j] > pop_size);
+    parents[j] = pop[rand[j]];
+        printf("%ld\n", rand[j]);
   }
 }

@@ -29,8 +29,8 @@ double * Predict(Genotype gene){
   params.mu = gene.mu * MU_RES * 0.0000001;
   params.sigma = gene.sigma * SIGMA_RES;
   params.delta = gene.delta * DELTA_RES;
-  //printf("%f %ld %ld %ld %ld %ld\n", BETA, gene.phi, gene.mu, gene.sigma, gene.delta, gene.lambda);
-  //printf("%f %f %f %f %f %f\n", params.beta, params.phi, params.mu, params.sigma, params.delta, params.lambda);
+  //printf("%f %ld %ld %ld %ld %ld %ld\n", BETA, gene.x0,gene.phi, gene.mu, gene.sigma, gene.delta, gene.lambda);
+  //printf("%f %f %f %f %f %f %f\n", params.beta, gene.x0 * X0_RES,params.phi, params.mu, params.sigma, params.delta, params.lambda);
 
   int x = GenerateEDOPrediction(xt, gene.x0 * X0_RES, YEARS, &params);
   return xt;
@@ -42,6 +42,7 @@ double fitness(Genotype gene){
   for (size_t i = 0; i < YEARS; i++) {
     int diff = (xt[i] - observations[i]);
     res = fmax(res, diff * diff);
+    //printf("%d\n", xt[i]);
   }
   return res;
 }
@@ -49,7 +50,7 @@ double fitness(Genotype gene){
 unsigned long int randGene(int size){
   unsigned long int rand;
   do {
-    rand = ULNGran(21);
+    rand = ULNGran(size);
   } while(rand == pow(2, size)); // to exclude the last value of the range
   return rand;
 }
@@ -64,11 +65,11 @@ Genotype * InitPopulation(unsigned short pop_size){
   for (i = 0; i < pop_size; i++) {
     pop[i].x0 = randGene(21);
     pop[i].phi = randGene(34);
-    pop[i].lambda = randGene(25);
+    pop[i].lambda = randGene(25);;
     pop[i].mu = randGene(25);
     pop[i].sigma = randGene(17);
     pop[i].delta = randGene(15);
-    printf("%ld %ld %ld %ld %ld %ld\n", pop[i].x0, pop[i].phi, pop[i].lambda, pop[i].mu, pop[i].sigma, pop[i].delta);
+    //printf("%ld %ld %ld %ld %ld %ld\n", pop[i].x0, pop[i].phi, pop[i].lambda, pop[i].mu, pop[i].sigma, pop[i].delta);
   }
 
   return pop;
@@ -104,13 +105,12 @@ Genotype GeneticSolve(unsigned short pop_size){
     // Calculate fitness of new generation
     for (size_t i = 0; i < pop_size; i++) {
       fit[i] = fitness(pop[i]);
-      printf("%f\n", fit[i]);
     }
 
     // For Half the population do
     for (size_t i = 0; i < pop_size / 2; i++) {
       // select two individuals from old generation for mating
-      pars = RouletteWheelSelection(pars, pop_size, pop, fit);
+      RandomSelection(pars, pop_size, pop);
 
       // ecombine the two individuals to give two offspring
 

@@ -25,5 +25,5 @@ int main(int argc, char *argv[]){
   printf("Result = %d\n", res);
   */
 
-  GeneticSolve(10);
+  GeneticSolve(100);
 }
