@@ -1,5 +1,6 @@
 #include "Predict.c"
 #include "Selection.c"
+#include "Crossovers.c"
 #include <math.h>
 #include <limits.h>
 
@@ -75,7 +76,33 @@ Genotype * InitPopulation(unsigned short pop_size){
   return pop;
 }
 
-Genotype GeneticSolve(unsigned short pop_size){
+void PrintGenotype(Genotype gene){
+    printf("X0 = %ld PHI = %ld LAMBDA = %ld MU = %ld SIGMA = %ld DELTA = %ld\n", gene.x0, gene.phi, gene.lambda, gene.mu, gene.sigma, gene.delta);
+}
+
+void GetOffspings(int i, Genotype p1, Genotype p2, Genotype * offsprings, double prob){
+  Crossover(i, p1.x0, p2.x0, &offsprings[0].x0, &offsprings[1].x0, prob);
+  Crossover(i, p1.phi, p2.phi, &offsprings[0].phi, &offsprings[1].phi, prob);
+  Crossover(i, p1.lambda, p2.lambda, &offsprings[0].lambda, &offsprings[1].lambda, prob);
+  Crossover(i, p1.mu, p2.mu, &offsprings[0].mu, &offsprings[1].mu, prob);
+  Crossover(i, p1.sigma, p2.sigma, &offsprings[0].sigma, &offsprings[1].sigma, prob);
+  Crossover(i, p1.delta, p2.delta, &offsprings[0].delta, &offsprings[1].delta, prob);
+}
+
+void MutateOffsprings(int i, Genotype * offspring, double prob){
+  for (size_t j = 0; j < 2; j++) {
+    PrintGenotype(offspring[j]);
+    Mutate(i, &offspring[j].x0, prob);
+    Mutate(i, &offspring[j].phi, prob);
+    Mutate(i, &offspring[j].lambda, prob);
+    Mutate(i, &offspring[j].mu, prob);
+    Mutate(i, &offspring[j].sigma, prob);
+    Mutate(i, &offspring[j].delta, prob);
+    PrintGenotype(offspring[j]);
+  }
+}
+
+Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k){
   // It's easier to deal with an even population
   if(pop_size % 2)
     pop_size++;
@@ -101,7 +128,8 @@ Genotype GeneticSolve(unsigned short pop_size){
       exit(1);
 
   // While not converging
-  while(1){
+  unsigned short iter = 0;
+  while(iter < n_iter){
     // Calculate fitness of new generation
     for (size_t i = 0; i < pop_size; i++) {
       fit[i] = fitness(pop[i]);
@@ -110,16 +138,19 @@ Genotype GeneticSolve(unsigned short pop_size){
     // For Half the population do
     for (size_t i = 0; i < pop_size / 2; i++) {
       // select two individuals from old generation for mating
-      RankSelection(pars, pop_size, pop, fit);
+      Selection(select_case, pars, pop_size, pop, fit, k);
 
-      // ecombine the two individuals to give two offspring
+      // Combine the two individuals to give two offspring
+      GetOffspings(crossover_case, pars[0], pars[1], offsprings, crossover_prob);
+
+      // Mutate
+      MutateOffsprings(mutation_case, offsprings, mutation_prob);
 
       // insert offspring in new generation
       new_pop[i*2] = offsprings[0];
       new_pop[i*2 + 1] = offsprings[1];
-      break;
     }
-    break;
+    iter++;
   }
   return pop[0];
 }

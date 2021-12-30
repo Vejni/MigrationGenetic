@@ -161,3 +161,22 @@ void RandomSelection(Genotype * parents, unsigned short pop_size, Genotype * pop
     parents[j] = pop[rand[j]];
   }
 }
+
+void Selection(int i, Genotype * parents, unsigned short pop_size, Genotype * pop, double * fit, unsigned short k){
+  switch (i) {
+    case 1:
+      RandomSelection(parents, pop_size, pop);
+      break;
+    case 2:
+      RouletteWheelSelection(parents, pop_size, pop, fit);
+      break;
+    case 3:
+      StochasticUniversalSampling(parents, pop_size, pop, fit);
+      break;
+    case 4:
+      RankSelection(parents, pop_size, pop, fit);
+      break;
+    default:
+      TournamentSelection(parents, pop_size, pop, fit, k);
+  }
+}
