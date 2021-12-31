@@ -16,6 +16,10 @@
 
 const int observations[] = {14177, 13031, 9762, 11271, 8688, 7571, 6983, 4778, 2067, 1586, 793};
 
+void PrintGenotype(Genotype gene){
+    printf("X0 = %ld PHI = %ld LAMBDA = %ld MU = %ld SIGMA = %ld DELTA = %ld\n", gene.x0, gene.phi, gene.lambda, gene.mu, gene.sigma, gene.delta);
+}
+
 double * Predict(Genotype gene){
   double *xt;
 
@@ -56,49 +60,40 @@ unsigned long int randGene(int size){
   return rand;
 }
 
-Genotype * InitPopulation(unsigned short pop_size){
-  Genotype * pop;
-  int i;
-
-  if((pop = (Genotype *) malloc(pop_size * sizeof(Genotype))) == NULL)
-    exit(1);
-
-  for (i = 0; i < pop_size; i++) {
-    pop[i].x0 = randGene(21);
-    pop[i].phi = randGene(34);
-    pop[i].lambda = randGene(25);;
-    pop[i].mu = randGene(25);
-    pop[i].sigma = randGene(17);
-    pop[i].delta = randGene(15);
-    //printf("%ld %ld %ld %ld %ld %ld\n", pop[i].x0, pop[i].phi, pop[i].lambda, pop[i].mu, pop[i].sigma, pop[i].delta);
+void InitPopulation(Genotype * pop, unsigned short pop_size){
+  for (size_t i = 0; i < pop_size; i++) {
+    do {
+      pop[i].x0 = randGene(21);
+      pop[i].phi = randGene(34);
+      pop[i].lambda = randGene(25);;
+      pop[i].mu = randGene(25);
+      pop[i].sigma = randGene(17);
+      pop[i].delta = randGene(15);
+      //Should not need this in theory
+    } while(fitness(pop[i]) == 0);
+    //PrintGenotype(pop[i]);
   }
-
-  return pop;
 }
 
-void PrintGenotype(Genotype gene){
-    printf("X0 = %ld PHI = %ld LAMBDA = %ld MU = %ld SIGMA = %ld DELTA = %ld\n", gene.x0, gene.phi, gene.lambda, gene.mu, gene.sigma, gene.delta);
-}
-
-void GetOffspings(int i, Genotype p1, Genotype p2, Genotype * offsprings, double prob){
-  Crossover(i, p1.x0, p2.x0, &offsprings[0].x0, &offsprings[1].x0, prob);
-  Crossover(i, p1.phi, p2.phi, &offsprings[0].phi, &offsprings[1].phi, prob);
-  Crossover(i, p1.lambda, p2.lambda, &offsprings[0].lambda, &offsprings[1].lambda, prob);
-  Crossover(i, p1.mu, p2.mu, &offsprings[0].mu, &offsprings[1].mu, prob);
-  Crossover(i, p1.sigma, p2.sigma, &offsprings[0].sigma, &offsprings[1].sigma, prob);
-  Crossover(i, p1.delta, p2.delta, &offsprings[0].delta, &offsprings[1].delta, prob);
+void GetOffspings(int i, Genotype * parents, Genotype * offsprings, double prob){
+  Crossover(i, parents[0].x0, parents[1].x0, &offsprings[0].x0, &offsprings[1].x0, prob);
+  Crossover(i, parents[0].phi, parents[1].phi, &offsprings[0].phi, &offsprings[1].phi, prob);
+  Crossover(i, parents[0].lambda, parents[1].lambda, &offsprings[0].lambda, &offsprings[1].lambda, prob);
+  Crossover(i, parents[0].mu, parents[1].mu, &offsprings[0].mu, &offsprings[1].mu, prob);
+  Crossover(i, parents[0].sigma, parents[1].sigma, &offsprings[0].sigma, &offsprings[1].sigma, prob);
+  Crossover(i, parents[0].delta, parents[1].delta, &offsprings[0].delta, &offsprings[1].delta, prob);
 }
 
 void MutateOffsprings(int i, Genotype * offspring, double prob){
   for (size_t j = 0; j < 2; j++) {
-    PrintGenotype(offspring[j]);
+    //PrintGenotype(offspring[j]);
     Mutate(i, &offspring[j].x0, prob);
     Mutate(i, &offspring[j].phi, prob);
     Mutate(i, &offspring[j].lambda, prob);
     Mutate(i, &offspring[j].mu, prob);
     Mutate(i, &offspring[j].sigma, prob);
     Mutate(i, &offspring[j].delta, prob);
-    PrintGenotype(offspring[j]);
+    //PrintGenotype(offspring[j]);
   }
 }
 
@@ -109,7 +104,10 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select
 
   // Generate Initial Population
   randomize();
-  Genotype * pop = InitPopulation(pop_size);
+  Genotype * pop;
+  if((pop = (Genotype *) malloc(pop_size * sizeof(Genotype))) == NULL)
+      exit(1);
+  InitPopulation(pop, pop_size);
 
   // Fitness for each Individual
   double * fit;
@@ -138,10 +136,12 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select
     // For Half the population do
     for (size_t i = 0; i < pop_size / 2; i++) {
       // select two individuals from old generation for mating
-      Selection(select_case, pars, pop_size, pop, fit, k);
+      Selection(4, pars, pop_size, pop, fit, k);
+      PrintGenotype(pars[0]);
+      PrintGenotype(pars[1]);
 
       // Combine the two individuals to give two offspring
-      GetOffspings(crossover_case, pars[0], pars[1], offsprings, crossover_prob);
+      GetOffspings(crossover_case, pars, offsprings, crossover_prob);
 
       // Mutate
       MutateOffsprings(mutation_case, offsprings, mutation_prob);

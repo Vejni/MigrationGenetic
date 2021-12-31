@@ -95,8 +95,8 @@ void TournamentSelection(Genotype * parents, unsigned short pop_size, Genotype *
       // While overshooting, generate again
       do {
           rand[i] = ULNGran(n);
-      } while(rand[i] > pop_size);
-    }
+      } while(rand[i] >= pop_size);
+    } // Remove dupplicates?
 
     // Tournament
     int best = INT_MAX;
@@ -104,10 +104,10 @@ void TournamentSelection(Genotype * parents, unsigned short pop_size, Genotype *
     for (size_t i = 0; i < k; i++){
       if (fit[rand[i]] < best){
         best = fit[rand[i]];
-        best_i = i;
+        best_i = rand[i];
       }
     }
-    parents[j] = pop[rand[best_i]];
+    parents[j] = pop[best_i];
   }
 }
 
@@ -140,6 +140,11 @@ void RankSelection(Genotype * parents, unsigned short pop_size, Genotype * pop, 
       total += ranks[i];
       i++;
     }
+
+    // We can overshoot
+    if (i == pop_size)
+      i--;
+
     // Found it
     parents[j] = pop[i];
   }
@@ -177,6 +182,8 @@ void Selection(int i, Genotype * parents, unsigned short pop_size, Genotype * po
       RankSelection(parents, pop_size, pop, fit);
       break;
     default:
+      if(k > pop_size)
+        k = pop_size;
       TournamentSelection(parents, pop_size, pop, fit, k);
   }
 }
