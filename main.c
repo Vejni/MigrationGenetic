@@ -15,7 +15,7 @@ int main(int argc, char *argv[]){
 	int select_case = argc>3? atof(argv[3]) : -1;
 	int mutation_case = argc>3? atof(argv[3]) : -1;
 	int crossover_case = argc>3? atof(argv[3]) : -1;
-	double crossover_prob = argc>5? atof(argv[5]) : 1.0;
+	double crossover_prob = argc>5? atof(argv[5]) : 0.5;
 	double mutation_prob = argc>5? atof(argv[5]) : 1.0;
   unsigned short k = argc>5? atof(argv[5]) : 10;
 

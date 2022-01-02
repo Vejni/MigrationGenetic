@@ -1,7 +1,21 @@
+#include <string.h>
+
 struct str{
     double value;
     size_t index;
 };
+
+void printBinary(unsigned long int n, int len){
+  // Prints unsigned long in binary format
+  char * binary = (char*)malloc(sizeof(char) * len);
+  int k = 0;
+  for (unsigned i = (1 << len - 1); i > 0; i = i / 2) {
+      binary[k++] = (n & i) ? '1' : '0';
+  }
+  binary[k] = '\0';
+  printf("%s\n", binary);
+}
+
 
 unsigned short int nextPowerOf2(unsigned long int n){
   unsigned count = 0;

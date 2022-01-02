@@ -76,12 +76,12 @@ void InitPopulation(Genotype * pop, unsigned short pop_size){
 }
 
 void GetOffspings(int i, Genotype * parents, Genotype * offsprings, double prob){
-  Crossover(i, parents[0].x0, parents[1].x0, &offsprings[0].x0, &offsprings[1].x0, prob);
-  Crossover(i, parents[0].phi, parents[1].phi, &offsprings[0].phi, &offsprings[1].phi, prob);
-  Crossover(i, parents[0].lambda, parents[1].lambda, &offsprings[0].lambda, &offsprings[1].lambda, prob);
-  Crossover(i, parents[0].mu, parents[1].mu, &offsprings[0].mu, &offsprings[1].mu, prob);
-  Crossover(i, parents[0].sigma, parents[1].sigma, &offsprings[0].sigma, &offsprings[1].sigma, prob);
-  Crossover(i, parents[0].delta, parents[1].delta, &offsprings[0].delta, &offsprings[1].delta, prob);
+  Crossover(i, 21, parents[0].x0, parents[1].x0, &offsprings[0].x0, &offsprings[1].x0, prob);
+  Crossover(i, 34, parents[0].phi, parents[1].phi, &offsprings[0].phi, &offsprings[1].phi, prob);
+  Crossover(i, 25, parents[0].lambda, parents[1].lambda, &offsprings[0].lambda, &offsprings[1].lambda, prob);
+  Crossover(i, 25, parents[0].mu, parents[1].mu, &offsprings[0].mu, &offsprings[1].mu, prob);
+  Crossover(i, 17, parents[0].sigma, parents[1].sigma, &offsprings[0].sigma, &offsprings[1].sigma, prob);
+  Crossover(i, 15, parents[0].delta, parents[1].delta, &offsprings[0].delta, &offsprings[1].delta, prob);
 }
 
 void MutateOffsprings(int i, Genotype * offspring, double prob){
@@ -136,9 +136,7 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select
     // For Half the population do
     for (size_t i = 0; i < pop_size / 2; i++) {
       // select two individuals from old generation for mating
-      Selection(4, pars, pop_size, pop, fit, k);
-      PrintGenotype(pars[0]);
-      PrintGenotype(pars[1]);
+      Selection(select_case, pars, pop_size, pop, fit, k);
 
       // Combine the two individuals to give two offspring
       GetOffspings(crossover_case, pars, offsprings, crossover_prob);
