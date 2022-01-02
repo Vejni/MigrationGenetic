@@ -3,6 +3,7 @@
 #include "Crossovers.c"
 #include <math.h>
 #include <limits.h>
+#include <errno.h>
 
 #define YEARS 11
 #define BETA 0.000024382635446
@@ -40,7 +41,7 @@ double * Predict(Genotype gene){
   return xt;
 }
 
-double max_norm(Genotype gene){
+double MaxNorm(Genotype gene){
   int res = INT_MIN;
   double * xt = Predict(gene);
   for (size_t i = 0; i < YEARS; i++) {
@@ -50,7 +51,7 @@ double max_norm(Genotype gene){
   return res;
 }
 
-double weighted_norm(Genotype gene){
+double WeightedNorm(Genotype gene){
   double res = 0;
   double * xt = Predict(gene);
   for (size_t i = 0; i < YEARS; i++) {
@@ -63,10 +64,10 @@ double weighted_norm(Genotype gene){
 double Fitness(int i, Genotype gene){
   switch (i) {
     case 1:
-      return weighted_norm(gene);
+      return WeightedNorm(gene);
       break;
     default:
-      return max_norm(gene);
+      return MaxNorm(gene);
   }
 }
 
@@ -115,7 +116,17 @@ void MutateOffsprings(int i, Genotype * offspring, double prob){
   }
 }
 
-Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int fitness_case, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k){
+void LogResidues(Genotype gene, FILE * fp){
+  double * xt = Predict(gene);
+  for (size_t i = 0; i < YEARS; i++) {
+    fprintf(fp, "%f", observations[i] - xt[i]);
+    if (i < YEARS - 1)
+      fprintf(fp, ", ");
+    else fprintf(fp, "\n");
+  }
+}
+
+Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, unsigned short unchanged_max, int fitness_case, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k, char * path){
   // It's easier to deal with an even population
   if(pop_size % 2)
     pop_size++;
@@ -146,10 +157,17 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int fitnes
   // For iterating
   unsigned short iter = 0;
   Genotype * temp;
-  double best;
+  double best = INT_MAX;
+  double prev_best = INT_MAX;
+  double epsilon;
+  int unchanged_counter;
 
+  // For logging
+  FILE *fp = NULL;
+  fp = fopen(path, "w");
+  if(fp == NULL) exit(1);
 
-  while(iter < n_iter){
+  while(iter < n_iter && unchanged_counter <= unchanged_max){
     // For Half the population do
     for (size_t i = 0; i < pop_size / 2; i++) {
       // select two individuals from old generation for mating
@@ -172,7 +190,6 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int fitnes
     new_pop = temp;
 
     // update Fitness scores and report fittest
-    best = INT_MAX;
     for (size_t i = 0; i < pop_size; i++) {
       fit[i] = Fitness(fitness_case, pop[i]);
       if (fit[i] < best){
@@ -181,11 +198,21 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int fitnes
       }
     }
 
-    // Advance
-    printf("Iteration %d, best fitnes %f, fittest individual: \n", iter + 1, Fitness(fitness_case, *temp));
+    // Log
+    printf("Iteration %d, best fitnes %f, fittest individual: \n", iter + 1, best);
     //PrintGenotype(*temp);
     //printf("\n");
+    LogResidues(*temp, fp);
+
+    // Convergence check
+    epsilon = prev_best - best;
+    prev_best = best;
+    if(!epsilon) unchanged_counter++;
+    else unchanged_counter = 0;
+
     iter++;
   }
+
+  fclose(fp);
   return *temp;
 }
