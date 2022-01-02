@@ -54,9 +54,6 @@ void BitFlipMutation(unsigned char len, unsigned long int *f, double prob){
 void Mutate(int i, unsigned char len, unsigned long int *f, double prob){
   switch (i) {
     case 1:
-      return;
-      break;
-    case 2:
       mutation1(len, f, prob);
       break;
     default:

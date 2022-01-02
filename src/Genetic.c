@@ -68,6 +68,7 @@ double Fitness(int i, Genotype gene){
       break;
     default:
       return MaxNorm(gene);
+      break;
   }
 }
 

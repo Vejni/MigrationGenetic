@@ -7,8 +7,8 @@ int main(int argc, char *argv[]){
 	unsigned short unchanged_max = argc>3? atoi(argv[3]) : 100;
   int fitness_case = argc>4? atoi(argv[4]) : -1;
 	int select_case = argc>5? atoi(argv[5]) : -1;
-	int mutation_case = argc>6? atoi(argv[6]) : -1;
-	int crossover_case = argc>7? atoi(argv[7]) : -1;
+  int crossover_case = argc>6? atoi(argv[6]) : -1;
+	int mutation_case = argc>7? atoi(argv[7]) : -1;
 	double crossover_prob = argc>8? atof(argv[8]) : 0.1;
 	double mutation_prob = argc>9? atof(argv[9]) : 0.01;
   unsigned short k = argc>10? atof(argv[10]) : 100;
