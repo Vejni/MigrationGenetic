@@ -12,12 +12,13 @@ int main(int argc, char *argv[]){
     */
   unsigned short n_iter = argc>1? atoi(argv[1]) : 10;
 	unsigned short pop_size = argc>2? atof(argv[2]) : 100;
-	int select_case = argc>3? atof(argv[3]) : -1;
-	int mutation_case = argc>3? atof(argv[3]) : -1;
-	int crossover_case = argc>3? atof(argv[3]) : -1;
-	double crossover_prob = argc>5? atof(argv[5]) : 0.1;
-	double mutation_prob = argc>5? atof(argv[5]) : 0.01;
-  unsigned short k = argc>5? atof(argv[5]) : 10;
+  int fitness_case = argc>3? atof(argv[3]) : -1;
+	int select_case = argc>4? atof(argv[4]) : -1;
+	int mutation_case = argc>5? atof(argv[5]) : -1;
+	int crossover_case = argc>6? atof(argv[6]) : -1;
+	double crossover_prob = argc>7? atof(argv[7]) : 0.1;
+	double mutation_prob = argc>8? atof(argv[8]) : 0.01;
+  unsigned short k = argc>9? atof(argv[9]) : 10;
 
-  GeneticSolve(n_iter, pop_size, select_case, mutation_case, crossover_case, crossover_prob, mutation_prob, k);
+  GeneticSolve(n_iter, pop_size, fitness_case, select_case, mutation_case, crossover_case, crossover_prob, mutation_prob, k);
 }

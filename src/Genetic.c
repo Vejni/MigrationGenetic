@@ -15,6 +15,7 @@
 #define PHI_RES 5.841138773
 
 const int observations[] = {14177, 13031, 9762, 11271, 8688, 7571, 6983, 4778, 2067, 1586, 793};
+const double weights[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 void PrintGenotype(Genotype gene){
     printf("X0 = %ld PHI = %ld LAMBDA = %ld MU = %ld SIGMA = %ld DELTA = %ld\n", gene.x0, gene.phi, gene.lambda, gene.mu, gene.sigma, gene.delta);
@@ -34,22 +35,39 @@ double * Predict(Genotype gene){
   params.mu = gene.mu * MU_RES * 0.0000001;
   params.sigma = gene.sigma * SIGMA_RES;
   params.delta = gene.delta * DELTA_RES;
-  //printf("%f %ld %ld %ld %ld %ld %ld\n", BETA, gene.x0,gene.phi, gene.mu, gene.sigma, gene.delta, gene.lambda);
-  //printf("%f %f %f %f %f %f %f\n", params.beta, gene.x0 * X0_RES,params.phi, params.mu, params.sigma, params.delta, params.lambda);
 
   int x = GenerateEDOPrediction(xt, gene.x0 * X0_RES, YEARS, &params);
   return xt;
 }
 
-double fitness(Genotype gene){
+double max_norm(Genotype gene){
   int res = INT_MIN;
   double * xt = Predict(gene);
   for (size_t i = 0; i < YEARS; i++) {
     int diff = (xt[i] - observations[i]);
     res = fmax(res, diff * diff);
-    //printf("%d\n", xt[i]);
   }
   return res;
+}
+
+double weighted_norm(Genotype gene){
+  double res = 0;
+  double * xt = Predict(gene);
+  for (size_t i = 0; i < YEARS; i++) {
+    double diff = (xt[i] - observations[i]);
+    res += (diff * diff) * weights[i];
+  }
+  return res;
+}
+
+double Fitness(int i, Genotype gene){
+  switch (i) {
+    case 1:
+      return weighted_norm(gene);
+      break;
+    default:
+      return max_norm(gene);
+  }
 }
 
 unsigned long int randGene(int size){
@@ -60,7 +78,7 @@ unsigned long int randGene(int size){
   return rand;
 }
 
-void InitPopulation(double * fit, Genotype * pop, unsigned short pop_size){
+void InitPopulation(int fitness_case, double * fit, Genotype * pop, unsigned short pop_size){
   for (size_t i = 0; i < pop_size; i++) {
     do {
       pop[i].x0 = randGene(21);
@@ -70,8 +88,8 @@ void InitPopulation(double * fit, Genotype * pop, unsigned short pop_size){
       pop[i].sigma = randGene(17);
       pop[i].delta = randGene(15);
 
-      //Should not need this in theory, but since we check save fitness here
-      fit[i] = fitness(pop[i]);
+      //Should not need this in theory, but since we check save Fitness here
+      fit[i] = Fitness(fitness_case, pop[i]);
     } while(fit[i] == 0);
     //PrintGenotype(pop[i]);
   }
@@ -97,7 +115,7 @@ void MutateOffsprings(int i, Genotype * offspring, double prob){
   }
 }
 
-Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k){
+Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int fitness_case, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k){
   // It's easier to deal with an even population
   if(pop_size % 2)
     pop_size++;
@@ -112,7 +130,7 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select
   Genotype * pop;
   if((pop = (Genotype *) malloc(pop_size * sizeof(Genotype))) == NULL)
       exit(1);
-  InitPopulation(fit, pop, pop_size);
+  InitPopulation(fitness_case, fit, pop, pop_size);
 
   // Init new_pop, parents, offsprings
   Genotype * new_pop;
@@ -153,10 +171,10 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select
     pop = new_pop;
     new_pop = temp;
 
-    // update fitness scores and report fittest
+    // update Fitness scores and report fittest
     best = INT_MAX;
     for (size_t i = 0; i < pop_size; i++) {
-      fit[i] = fitness(pop[i]);
+      fit[i] = Fitness(fitness_case, pop[i]);
       if (fit[i] < best){
         best = fit[i];
         temp = &pop[i];
@@ -164,7 +182,7 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select
     }
 
     // Advance
-    printf("Iteration %d, best fitnes %f, fittest individual: \n", iter, fitness(*temp));
+    printf("Iteration %d, best fitnes %f, fittest individual: \n", iter + 1, Fitness(fitness_case, *temp));
     //PrintGenotype(*temp);
     //printf("\n");
     iter++;
