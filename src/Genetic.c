@@ -60,7 +60,7 @@ unsigned long int randGene(int size){
   return rand;
 }
 
-void InitPopulation(Genotype * pop, unsigned short pop_size){
+void InitPopulation(double * fit, Genotype * pop, unsigned short pop_size){
   for (size_t i = 0; i < pop_size; i++) {
     do {
       pop[i].x0 = randGene(21);
@@ -69,8 +69,10 @@ void InitPopulation(Genotype * pop, unsigned short pop_size){
       pop[i].mu = randGene(25);
       pop[i].sigma = randGene(17);
       pop[i].delta = randGene(15);
-      //Should not need this in theory
-    } while(fitness(pop[i]) == 0);
+
+      //Should not need this in theory, but since we check save fitness here
+      fit[i] = fitness(pop[i]);
+    } while(fit[i] == 0);
     //PrintGenotype(pop[i]);
   }
 }
@@ -86,14 +88,12 @@ void GetOffspings(int i, Genotype * parents, Genotype * offsprings, double prob)
 
 void MutateOffsprings(int i, Genotype * offspring, double prob){
   for (size_t j = 0; j < 2; j++) {
-    //PrintGenotype(offspring[j]);
-    Mutate(i, &offspring[j].x0, prob);
-    Mutate(i, &offspring[j].phi, prob);
-    Mutate(i, &offspring[j].lambda, prob);
-    Mutate(i, &offspring[j].mu, prob);
-    Mutate(i, &offspring[j].sigma, prob);
-    Mutate(i, &offspring[j].delta, prob);
-    //PrintGenotype(offspring[j]);
+    Mutate(i, 21, &offspring[j].x0, prob);
+    Mutate(i, 34, &offspring[j].phi, prob);
+    Mutate(i, 25, &offspring[j].lambda, prob);
+    Mutate(i, 25, &offspring[j].mu, prob);
+    Mutate(i, 17, &offspring[j].sigma, prob);
+    Mutate(i, 15, &offspring[j].delta, prob);
   }
 }
 
@@ -102,17 +102,17 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select
   if(pop_size % 2)
     pop_size++;
 
+  // Fitness for each Individual
+  double * fit;
+  if((fit = (double *) malloc(pop_size * sizeof(double))) == NULL)
+    exit(1);
+
   // Generate Initial Population
   randomize();
   Genotype * pop;
   if((pop = (Genotype *) malloc(pop_size * sizeof(Genotype))) == NULL)
       exit(1);
-  InitPopulation(pop, pop_size);
-
-  // Fitness for each Individual
-  double * fit;
-  if((fit = (double *) malloc(pop_size * sizeof(double))) == NULL)
-    exit(1);
+  InitPopulation(fit, pop, pop_size);
 
   // Init new_pop, parents, offsprings
   Genotype * new_pop;
@@ -125,14 +125,13 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select
   if((pars = (Genotype *) malloc(2 * sizeof(Genotype))) == NULL)
       exit(1);
 
-  // While not converging
+  // For iterating
   unsigned short iter = 0;
-  while(iter < n_iter){
-    // Calculate fitness of new generation
-    for (size_t i = 0; i < pop_size; i++) {
-      fit[i] = fitness(pop[i]);
-    }
+  Genotype * temp;
+  double best;
 
+
+  while(iter < n_iter){
     // For Half the population do
     for (size_t i = 0; i < pop_size / 2; i++) {
       // select two individuals from old generation for mating
@@ -148,7 +147,27 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, int select
       new_pop[i*2] = offsprings[0];
       new_pop[i*2 + 1] = offsprings[1];
     }
+
+    // switch population and new population
+    temp = pop;
+    pop = new_pop;
+    new_pop = temp;
+
+    // update fitness scores and report fittest
+    best = INT_MAX;
+    for (size_t i = 0; i < pop_size; i++) {
+      fit[i] = fitness(pop[i]);
+      if (fit[i] < best){
+        best = fit[i];
+        temp = &pop[i];
+      }
+    }
+
+    // Advance
+    printf("Iteration %d, best fitnes %f, fittest individual: \n", iter, fitness(*temp));
+    //PrintGenotype(*temp);
+    //printf("\n");
     iter++;
   }
-  return pop[0];
+  return *temp;
 }

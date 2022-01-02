@@ -41,27 +41,26 @@ void Crossover(int i, unsigned char len, unsigned long int p1, unsigned long int
 
 }
 
-void mutation1(unsigned long int *f, double prob){
-  if(uniform() < prob) *f = (*f)^(1U << ((unsigned char) uniform()*8*sizeof(*f)));
+void mutation1(unsigned char len, unsigned long int *f, double prob){
+  if(uniform() < prob) *f = (*f)^(1U << ((unsigned char) uniform() * len));
 }
 
-void BitFlipMutation(unsigned long int *f, double prob){
-  unsigned char len = 8*sizeof(*f);
+void BitFlipMutation(unsigned char len, unsigned long int *f, double prob){
   unsigned long int mask = 0U;
   register unsigned char i;
   for(i=0; i < len; i++) if(uniform() < prob) *f = (*f)^(1U << i);
 }
 
-void Mutate(int i, unsigned long int *f, double prob){
+void Mutate(int i, unsigned char len, unsigned long int *f, double prob){
   switch (i) {
     case 1:
       return;
       break;
     case 2:
-      mutation1(f, prob);
+      mutation1(len, f, prob);
       break;
     default:
-      BitFlipMutation(f, prob);
+      BitFlipMutation(len, f, prob);
       break;
   }
 }
