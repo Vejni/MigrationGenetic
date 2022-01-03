@@ -8,6 +8,7 @@
 #define RKTOL 1.e-8
 
 typedef struct {
+  double x0;
   double phi;
   double beta;
   double lambda;

@@ -18,83 +18,83 @@
 const int observations[] = {14177, 13031, 9762, 11271, 8688, 7571, 6983, 4778, 2067, 1586, 793};
 const double weights[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
+ODE_Parameters GenToPhen(Genotype gene){
+  ODE_Parameters params;
+  params.x0 = gene.x0 * X0_RES;
+  params.phi = (gene.phi * PHI_RES * 0.000000001) - PHI_OFFSET;
+  params.lambda = gene.lambda * LAMBDA_RES * 0.00001;
+  params.mu = gene.mu * MU_RES * 0.0000001;
+  params.sigma = gene.sigma * SIGMA_RES;
+  params.delta = gene.delta * DELTA_RES;
+  return params;
+}
+
+Genotype PhenToGen(ODE_Parameters params){
+  Genotype gene;
+  gene.x0 = params.x0 / X0_RES;
+  gene.phi = (params.phi + PHI_OFFSET) / (PHI_RES * 0.000000001);
+  gene.lambda = params.lambda / (LAMBDA_RES * 0.00001);
+  gene.mu = params.mu / (MU_RES * 0.0000001);
+  gene.sigma = params.sigma / SIGMA_RES;
+  gene.delta = params.delta / DELTA_RES;
+  return gene;
+}
+
 void PrintGenotype(Genotype gene){
-  ODE_Parameters params;
-  params.phi = (gene.phi * PHI_RES * 0.000000001) - PHI_OFFSET;
-  params.lambda = gene.lambda * LAMBDA_RES * 0.00001;
-  params.mu = gene.mu * MU_RES * 0.0000001;
-  params.sigma = gene.sigma * SIGMA_RES;
-  params.delta = gene.delta * DELTA_RES;
-  printf("BETA = %f X0 = %f PHI = %f LAMBDA = %f MU = %f SIGMA = %f DELTA = %f\n", BETA, gene.x0 * X0_RES, params.phi, params.lambda, params.mu, params.sigma, params.delta);
+  ODE_Parameters params = GenToPhen(gene);
+  printf("BETA = %f X0 = %f PHI = %f LAMBDA = %f MU = %f SIGMA = %f DELTA = %f\n", BETA, params.x0, params.phi, params.lambda, params.mu, params.sigma, params.delta);
 }
 
-double * Predict(Genotype gene){
-  double *xt;
+double MaxNorm(double * xt, Genotype gene){
+  double res = -DBL_MAX;
+  double diff;
+  ODE_Parameters params = GenToPhen(gene);
+  GenerateEDOPrediction(xt, params.x0, YEARS, &params);
 
-  if((xt = (double *) malloc(YEARS * sizeof(double))) == NULL)
-    exit(1);
-
-  // Genotype to Phenotype
-  ODE_Parameters params;
-  params.phi = (gene.phi * PHI_RES * 0.000000001) - PHI_OFFSET;
-  params.beta = BETA;
-  params.lambda = gene.lambda * LAMBDA_RES * 0.00001;
-  params.mu = gene.mu * MU_RES * 0.0000001;
-  params.sigma = gene.sigma * SIGMA_RES;
-  params.delta = gene.delta * DELTA_RES;
-
-  int x = GenerateEDOPrediction(xt, gene.x0 * X0_RES, YEARS, &params);
-  return xt;
-}
-
-double MaxNorm(Genotype gene){
-  int res = INT_MIN;
-  double * xt = Predict(gene);
-  for (size_t i = 0; i < YEARS; i++) {
-    int diff = (xt[i] - observations[i]);
+  for (size_t i = 0; i <= YEARS; i++) {
+    diff = (xt[i] - observations[i]);
     res = fmax(res, diff * diff);
   }
   return res;
 }
 
-double WeightedNorm(Genotype gene){
+double WeightedNorm(double * xt, Genotype gene){
   double res = 0;
-  double * xt = Predict(gene);
-  for (size_t i = 0; i < YEARS; i++) {
-    double diff = (xt[i] - observations[i]);
+  double diff;
+  ODE_Parameters params = GenToPhen(gene);
+  GenerateEDOPrediction(xt, params.x0, YEARS, &params);
+
+  for (size_t i = 0; i <= YEARS; i++) {
+    diff = (xt[i] - observations[i]);
     res += (diff * diff) * weights[i];
   }
   return res;
 }
 
-double Fitness(int i, Genotype gene){
+double Fitness(int i, double * xt, Genotype gene){
   switch (i) {
     case 1:
-      return WeightedNorm(gene);
+      return WeightedNorm(xt, gene);
       break;
     default:
-      return MaxNorm(gene);
+      return MaxNorm(xt, gene);
       break;
   }
 }
 
-void InitIndividual(int fitness_case, double * fit, Genotype * pop, size_t i){
-  do {
-    pop[i].x0 = randGene(21);
-    pop[i].phi = randGene(34);
-    pop[i].lambda = randGene(25);;
-    pop[i].mu = randGene(25);
-    pop[i].sigma = randGene(17);
-    pop[i].delta = randGene(15);
-
-    //Should not need this in theory, but since we check save Fitness here
-    fit[i] = Fitness(fitness_case, pop[i]);
-  } while(fit[i] == 0);
-}
-
-void InitPopulation(int fitness_case, double * fit, Genotype * pop, unsigned short pop_size){
+void InitPopulation(int fitness_case, double * xt, double * fit, Genotype * pop, unsigned short pop_size){
   for (size_t i = 0; i < pop_size; i++) {
-    InitIndividual(fitness_case, fit, pop, i);
+    do {
+      pop[i].x0 = randGene(21);
+      pop[i].phi = randGene(34);
+      pop[i].lambda = randGene(25);;
+      pop[i].mu = randGene(25);
+      pop[i].sigma = randGene(17);
+      pop[i].delta = randGene(15);
+
+      //Should not need this in theory, but since we check save Fitness here
+      fit[i] = Fitness(fitness_case, xt, pop[i]);
+    } while(fit[i] == 0);
   }
 }
 
@@ -119,13 +119,32 @@ void MutateOffsprings(int i, Genotype * offspring, double prob){
 }
 
 void LogResidues(Genotype gene, FILE * fp){
-  double * xt = Predict(gene);
-  for (size_t i = 0; i < YEARS; i++) {
-    fprintf(fp, "%f", observations[i] - xt[i]);
-    if (i < YEARS - 1)
+  double *xt;
+  if((xt = (double *) malloc(YEARS * sizeof(double))) == NULL)
+    exit(1);
+
+  ODE_Parameters params = GenToPhen(gene);
+  GenerateEDOPrediction(xt, params.x0, YEARS, &params);
+
+  for (size_t i = 0; i <= YEARS; i++) {
+    fprintf(fp, "%f", xt[i]);
+    if (i <= YEARS - 1)
       fprintf(fp, ", ");
     else fprintf(fp, "\n");
   }
+  for (size_t i = 0; i <= YEARS; i++) {
+    fprintf(fp, "%d", observations[i]);
+    if (i <= YEARS - 1)
+      fprintf(fp, ", ");
+    else fprintf(fp, "\n");
+  }
+  for (size_t i = 0; i <= YEARS; i++) {
+    fprintf(fp, "%f", observations[i] - xt[i]);
+    if (i <= YEARS - 1)
+      fprintf(fp, ", ");
+    else fprintf(fp, "\n");
+  }
+  free(xt);
 }
 
 void autopilot_params(int autopilot, double epsilon, int * unchanged_counter, double * crossover_prob, double * mutation_prob, double orig_cross_prob, double orig_mut_prob, int * select_case, int * crossover_case, int * mutation_case){
@@ -149,7 +168,7 @@ void autopilot_params(int autopilot, double epsilon, int * unchanged_counter, do
   }
 }
 
-Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_size, unsigned short unchanged_max, int fitness_case, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k, char * path){
+Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_size, unsigned short unchanged_max, int fitness_case, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k, char * path, ODE_Parameters * inject){
   // It's easier to deal with an even population
   if(pop_size % 2)
     pop_size++;
@@ -158,13 +177,19 @@ Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_s
   double * fit;
   if((fit = (double *) malloc(pop_size * sizeof(double))) == NULL)
     exit(1);
+  double *xt;
+  if((xt = (double *) malloc(YEARS * sizeof(double))) == NULL)
+    exit(1);
 
   // Generate Initial Population
   randomize();
   Genotype * pop;
   if((pop = (Genotype *) malloc(pop_size * sizeof(Genotype))) == NULL)
       exit(1);
-  InitPopulation(fitness_case, fit, pop, pop_size);
+  InitPopulation(fitness_case, xt, fit, pop, pop_size);
+
+  // We may force an individual in the Population
+  if(inject != NULL) pop[0] = PhenToGen(*inject);
 
   // Init new_pop, parents, offsprings
   Genotype * new_pop;
@@ -181,10 +206,10 @@ Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_s
   unsigned short iter = 0;
   Genotype * temp;
   Genotype best_gene;
-  double best = INT_MAX;
-  double prev_best = INT_MAX;
+  double best = DBL_MAX;
+  double prev_best = DBL_MAX;
   double epsilon;
-  int unchanged_counter;
+  int unchanged_counter = 0;
   double orig_mut_prob = mutation_prob;
   double orig_cross_prob = crossover_prob;
 
@@ -193,10 +218,9 @@ Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_s
   fp = fopen(path, "w");
   if(fp == NULL) exit(1);
 
-  while(iter < n_iter && unchanged_counter <= unchanged_max && best){
+  while(iter < n_iter && unchanged_counter <= unchanged_max){
     // For Half the population do
     for (size_t i = 0; i < pop_size / 2; i++) {
-
       // select two individuals from old generation for mating
       Selection(select_case, pars, pop_size, pop, fit, k);
 
@@ -218,7 +242,7 @@ Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_s
 
     // update Fitness scores and report fittest
     for (size_t i = 0; i < pop_size; i++) {
-      fit[i] = Fitness(fitness_case, pop[i]);
+      fit[i] = Fitness(fitness_case, xt, pop[i]);
       if (fit[i] < best){
         best = fit[i];
         best_gene = pop[i];
@@ -228,7 +252,7 @@ Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_s
     // Log
     printf("Iteration %d, cases %d %d %d, probs %f %f, best fitness %f, fittest individual: ", iter + 1, select_case, crossover_case, mutation_case, crossover_prob, mutation_prob, best);
     PrintGenotype(best_gene);
-    fprintf(fp, "%f, ", best);
+    fprintf(fp, "%f\n", best);
 
     // Convergence check and mutation enhancement
     epsilon = prev_best - best;
@@ -238,6 +262,13 @@ Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_s
     iter++;
   }
 
+  // Cleanup
+  free(new_pop);
+  free(pop);
+  free(offsprings);
+  free(pars);
+  free(fit);
+  free(xt);
   fclose(fp);
   return *temp;
 }
