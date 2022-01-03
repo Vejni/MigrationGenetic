@@ -2,8 +2,8 @@ gcc main.c -lm -o main
 
 # Compare Fitness Functions
 echo "Comparing Fitness Functions"
-./main 1 500 2000 50 0 0 0 0 0.1 0.1 100 "logs/fittness_MaxNorm.csv" "logs/residues_fittest_MaxNorm.csv"
-./main 1 500 2000 50 1 0 0 0 0.1 0.1 100 "logs/fittness_WeightedNorm.csv" "logs/residues_fittest_WeightedNorm.csv"
+./main 1 500 1000 50 0 0 0 0 0.1 0.1 100 "logs/fittness_MaxNorm.csv" "logs/residues_fittest_MaxNorm.csv"
+./main 1 500 1000 50 1 0 0 0 0.1 0.1 100 "logs/fittness_WeightedNorm.csv" "logs/residues_fittest_WeightedNorm.csv"
 
 # Compare Selection functions
 echo "Comparing Selection Functions"

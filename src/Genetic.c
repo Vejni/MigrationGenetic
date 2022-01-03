@@ -168,7 +168,7 @@ void autopilot_params(int autopilot, double epsilon, int * unchanged_counter, do
   }
 }
 
-Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_size, unsigned short unchanged_max, int fitness_case, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k, char * path, ODE_Parameters * inject){
+Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_size, unsigned short unchanged_max, int fitness_case, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k, char * path){
   // It's easier to deal with an even population
   if(pop_size % 2)
     pop_size++;
@@ -187,9 +187,6 @@ Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_s
   if((pop = (Genotype *) malloc(pop_size * sizeof(Genotype))) == NULL)
       exit(1);
   InitPopulation(fitness_case, xt, fit, pop, pop_size);
-
-  // We may force an individual in the Population
-  if(inject != NULL) pop[0] = PhenToGen(*inject);
 
   // Init new_pop, parents, offsprings
   Genotype * new_pop;
@@ -270,5 +267,5 @@ Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_s
   free(fit);
   free(xt);
   fclose(fp);
-  return *temp;
+  return best_gene;
 }
