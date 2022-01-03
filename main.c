@@ -10,7 +10,7 @@ int main(int argc, char *argv[]){
   int crossover_case = argc>6? atoi(argv[6]) : -1;
 	int mutation_case = argc>7? atoi(argv[7]) : -1;
 	double crossover_prob = argc>8? atof(argv[8]) : 0.1;
-	double mutation_prob = argc>9? atof(argv[9]) : 0.01;
+	double mutation_prob = argc>9? atof(argv[9]) : 0.1;
   unsigned short k = argc>10? atof(argv[10]) : 100;
   char * path = argc>11? argv[11] : "logs/residues.csv";
   char * fittest_path = argc>11? argv[11] : "logs/residues_fittest.csv";

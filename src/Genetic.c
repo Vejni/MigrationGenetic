@@ -93,7 +93,6 @@ void InitPopulation(int fitness_case, double * fit, Genotype * pop, unsigned sho
       //Should not need this in theory, but since we check save Fitness here
       fit[i] = Fitness(fitness_case, pop[i]);
     } while(fit[i] == 0);
-    //PrintGenotype(pop[i]);
   }
 }
 
@@ -162,6 +161,8 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, unsigned s
   double prev_best = INT_MAX;
   double epsilon;
   int unchanged_counter;
+  double orig_mut_prob = mutation_prob;
+  double orig_cross_prob = crossover_prob;
 
   // For logging
   FILE *fp = NULL;
@@ -203,14 +204,23 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, unsigned s
     // Log
     printf("Iteration %d, best fitness %f, fittest individual: ", iter + 1, best);
     PrintGenotype(*temp);
-    //printf("\n");
     LogResidues(*temp, fp);
 
-    // Convergence check
+    // Convergence check and mutation enhancement
     epsilon = prev_best - best;
     prev_best = best;
-    if(!epsilon) unchanged_counter++;
-    else unchanged_counter = 0;
+    if(!epsilon) {
+      unchanged_counter++;
+      mutation_prob *= 1.1;
+      crossover_prob *= 1.1;
+      if(mutation_prob > 1) mutation_prob = 1;
+      if(crossover_prob > 1) crossover_prob = 1;
+    }
+    else {
+      unchanged_counter = 0;
+      mutation_prob = orig_mut_prob;
+      crossover_prob = orig_cross_prob;
+    }
 
     iter++;
   }
