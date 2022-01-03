@@ -79,6 +79,7 @@ void StochasticUniversalSampling(Genotype * parents, unsigned short pop_size, Ge
     // Found it
     parents[j] = pop[i];
   }
+  free(rand);
 }
 
 void TournamentSelection(Genotype * parents, unsigned short pop_size, Genotype * pop, double * fit, unsigned short k){
@@ -109,6 +110,7 @@ void TournamentSelection(Genotype * parents, unsigned short pop_size, Genotype *
     }
     parents[j] = pop[best_i];
   }
+  free(rand);
 }
 
 void RankSelection(Genotype * parents, unsigned short pop_size, Genotype * pop, double * fit){
@@ -165,6 +167,7 @@ void RandomSelection(Genotype * parents, unsigned short pop_size, Genotype * pop
   } while(rand[j] > pop_size);
     parents[j] = pop[rand[j]];
   }
+  free(rand);
 }
 
 void Selection(int i, Genotype * parents, unsigned short pop_size, Genotype * pop, double * fit, unsigned short k){

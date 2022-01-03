@@ -168,9 +168,10 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, unsigned s
   fp = fopen(path, "w");
   if(fp == NULL) exit(1);
 
-  while(iter < n_iter && unchanged_counter <= unchanged_max){
+  while(iter < n_iter && unchanged_counter <= unchanged_max && best){
     // For Half the population do
     for (size_t i = 0; i < pop_size / 2; i++) {
+
       // select two individuals from old generation for mating
       Selection(select_case, pars, pop_size, pop, fit, k);
 
@@ -200,8 +201,8 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, unsigned s
     }
 
     // Log
-    printf("Iteration %d, best fitnes %f, fittest individual: \n", iter + 1, best);
-    //PrintGenotype(*temp);
+    printf("Iteration %d, best fitness %f, fittest individual: ", iter + 1, best);
+    PrintGenotype(*temp);
     //printf("\n");
     LogResidues(*temp, fp);
 
