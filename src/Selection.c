@@ -173,16 +173,16 @@ void RandomSelection(Genotype * parents, unsigned short pop_size, Genotype * pop
 void Selection(int i, Genotype * parents, unsigned short pop_size, Genotype * pop, double * fit, unsigned short k){
   switch (i) {
     case 1:
-      RandomSelection(parents, pop_size, pop);
-      break;
-    case 2:
       RouletteWheelSelection(parents, pop_size, pop, fit);
       break;
-    case 3:
+    case 2:
       StochasticUniversalSampling(parents, pop_size, pop, fit);
       break;
-    case 4:
+    case 3:
       RankSelection(parents, pop_size, pop, fit);
+      break;
+    case 4:
+      RandomSelection(parents, pop_size, pop);
       break;
     default:
       if(k > pop_size)

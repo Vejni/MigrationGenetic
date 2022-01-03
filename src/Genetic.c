@@ -19,7 +19,13 @@ const int observations[] = {14177, 13031, 9762, 11271, 8688, 7571, 6983, 4778, 2
 const double weights[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 void PrintGenotype(Genotype gene){
-    printf("X0 = %ld PHI = %ld LAMBDA = %ld MU = %ld SIGMA = %ld DELTA = %ld\n", gene.x0, gene.phi, gene.lambda, gene.mu, gene.sigma, gene.delta);
+  ODE_Parameters params;
+  params.phi = (gene.phi * PHI_RES * 0.000000001) - PHI_OFFSET;
+  params.lambda = gene.lambda * LAMBDA_RES * 0.00001;
+  params.mu = gene.mu * MU_RES * 0.0000001;
+  params.sigma = gene.sigma * SIGMA_RES;
+  params.delta = gene.delta * DELTA_RES;
+  printf("BETA = %f X0 = %f PHI = %f LAMBDA = %f MU = %f SIGMA = %f DELTA = %f\n", BETA, gene.x0 * X0_RES, params.phi, params.lambda, params.mu, params.sigma, params.delta);
 }
 
 double * Predict(Genotype gene){
@@ -72,27 +78,23 @@ double Fitness(int i, Genotype gene){
   }
 }
 
-unsigned long int randGene(int size){
-  unsigned long int rand;
+void InitIndividual(int fitness_case, double * fit, Genotype * pop, size_t i){
   do {
-    rand = ULNGran(size);
-  } while(rand == pow(2, size)); // to exclude the last value of the range
-  return rand;
+    pop[i].x0 = randGene(21);
+    pop[i].phi = randGene(34);
+    pop[i].lambda = randGene(25);;
+    pop[i].mu = randGene(25);
+    pop[i].sigma = randGene(17);
+    pop[i].delta = randGene(15);
+
+    //Should not need this in theory, but since we check save Fitness here
+    fit[i] = Fitness(fitness_case, pop[i]);
+  } while(fit[i] == 0);
 }
 
 void InitPopulation(int fitness_case, double * fit, Genotype * pop, unsigned short pop_size){
   for (size_t i = 0; i < pop_size; i++) {
-    do {
-      pop[i].x0 = randGene(21);
-      pop[i].phi = randGene(34);
-      pop[i].lambda = randGene(25);;
-      pop[i].mu = randGene(25);
-      pop[i].sigma = randGene(17);
-      pop[i].delta = randGene(15);
-
-      //Should not need this in theory, but since we check save Fitness here
-      fit[i] = Fitness(fitness_case, pop[i]);
-    } while(fit[i] == 0);
+    InitIndividual(fitness_case, fit, pop, i);
   }
 }
 
@@ -126,7 +128,28 @@ void LogResidues(Genotype gene, FILE * fp){
   }
 }
 
-Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, unsigned short unchanged_max, int fitness_case, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k, char * path){
+void autopilot_params(int autopilot, double epsilon, int * unchanged_counter, double * crossover_prob, double * mutation_prob, double orig_cross_prob, double orig_mut_prob, int * select_case, int * crossover_case, int * mutation_case){
+  if(epsilon < 0.0001) {
+    (*unchanged_counter)++;
+    if(autopilot){
+      if(*mutation_prob * 1.1 <= 1) *mutation_prob *= 1.1;
+      if(*crossover_prob * 1.1 <= 1) *crossover_prob *= 1.1;
+      if(*unchanged_counter > 5) *select_case = (*unchanged_counter % 5);
+      if(*unchanged_counter > 5) *crossover_case = (*unchanged_counter % 3);
+      if(*unchanged_counter > 5) *mutation_case = (*unchanged_counter % 4);
+    }
+  }
+  else {
+    *unchanged_counter = 0;
+    *mutation_prob = orig_mut_prob;
+    *crossover_prob = orig_cross_prob;
+    *select_case = 0;
+    *crossover_case = 0;
+    *mutation_case = 0;
+  }
+}
+
+Genotype GeneticSolve(int autopilot, unsigned short n_iter, unsigned short pop_size, unsigned short unchanged_max, int fitness_case, int select_case, int mutation_case, int crossover_case, double crossover_prob, double mutation_prob, unsigned short k, char * path){
   // It's easier to deal with an even population
   if(pop_size % 2)
     pop_size++;
@@ -157,6 +180,7 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, unsigned s
   // For iterating
   unsigned short iter = 0;
   Genotype * temp;
+  Genotype best_gene;
   double best = INT_MAX;
   double prev_best = INT_MAX;
   double epsilon;
@@ -197,30 +221,19 @@ Genotype GeneticSolve(unsigned short n_iter, unsigned short pop_size, unsigned s
       fit[i] = Fitness(fitness_case, pop[i]);
       if (fit[i] < best){
         best = fit[i];
-        temp = &pop[i];
+        best_gene = pop[i];
       }
     }
 
     // Log
-    printf("Iteration %d, best fitness %f, fittest individual: ", iter + 1, best);
-    PrintGenotype(*temp);
-    LogResidues(*temp, fp);
+    printf("Iteration %d, cases %d %d %d, probs %f %f, best fitness %f, fittest individual: ", iter + 1, select_case, crossover_case, mutation_case, crossover_prob, mutation_prob, best);
+    PrintGenotype(best_gene);
+    fprintf(fp, "%f, ", best);
 
     // Convergence check and mutation enhancement
     epsilon = prev_best - best;
     prev_best = best;
-    if(!epsilon) {
-      unchanged_counter++;
-      mutation_prob *= 1.1;
-      crossover_prob *= 1.1;
-      if(mutation_prob > 1) mutation_prob = 1;
-      if(crossover_prob > 1) crossover_prob = 1;
-    }
-    else {
-      unchanged_counter = 0;
-      mutation_prob = orig_mut_prob;
-      crossover_prob = orig_cross_prob;
-    }
+    autopilot_params(autopilot, epsilon, &unchanged_counter, &crossover_prob, &mutation_prob, orig_cross_prob, orig_mut_prob, &select_case, &crossover_case, &mutation_case);
 
     iter++;
   }
