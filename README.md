@@ -26,8 +26,3 @@ Arguments (in order):
 | k              | The number of individuals selected at random for tournament (in selection). | 1+     | 100                          |
 | path           | Path for logging.                                                           | -      | "logs/fittness.csv"          |
 | fittest_path   | Path for parameter and residual logging.                                    | -      | "logs/residues\_fittest.csv" |
-
-
-Example: ./astar 1 "results/route_haversine_1.txt" "results/stats_haversine_1.txt" 1 1
-
-Note: The repo does not contain the csv file because of its size. It can be found here https://mat.uab.cat/~alseda/MasterOpt/spain.csv.zip.
